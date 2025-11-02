@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StoryVerse | Katalog Cerita</title>
+
+  <link rel="icon" href="favicon.png" type="image/png" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#3498db" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to Content</a>
+
+  <header>
+    <div class="main-header container">
+      <a class="brand-name" href="#/">
+        <img src="./images/logo.png" alt="StoryVerse Logo" class="brand-logo" /> StoryVerse
+      </a>
+      <nav id="navigation-drawer" class="navigation-drawer">
+        <ul id="nav-list" class="nav-list">
+          <li><a href="#/">Beranda</a></li>
+          <li><a href="#/add">Tambah Cerita</a></li>
+          <li><a href="#/login" id="auth-link">Login</a></li>
+        </ul>
+      </nav>
+      <button id="drawer-button" class="drawer-button">☰</button>
+    </div>
+  </header>
+
+  <main id="main-content"></main>
+
+  <footer>
+    <p>&copy; 2025 - StoryVerse</p>
+    <button id="subscribe-button">🔔 Aktifkan Notifikasi</button>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</body>
+</html>
