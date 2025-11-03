@@ -1,14 +1,15 @@
 import StoryApi from '../../data/api';
+import FavoriteStoryIdb from '../../data/idb-helper';
 
 const HomePage = {
   async render() {
     return `
       <section class="container">
         <h1 class="sr-only">Halaman Utama</h1>
-
+        
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-            <h2>Jelajahi Cerita</h2>
-            </div>
+          <h2>Jelajahi Cerita</h2>
+        </div>
         <div id="map"></div>
         <div class="movie-list" id="movie-list">
             <p class="loader">Memuat cerita...</p>
@@ -25,20 +26,29 @@ const HomePage = {
     }
 
     const movieListContainer = document.querySelector('#movie-list');
+    const map = L.map('map').setView([-2.5489, 118.0149], 5);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
     try {
-      const stories = await StoryApi.getAllStoriesWithLocation();
+      // 1. Ambil SEMUA data (dari API dan DB)
+      const [stories, favoriteStories] = await Promise.all([
+        StoryApi.getAllStoriesWithLocation(),
+        FavoriteStoryIdb.getAllStories()
+      ]);
+
+      // Buat Set (daftar) ID favorit untuk pengecekan cepat
+      const favoriteIds = new Set(favoriteStories.map(story => story.id));
+
       movieListContainer.innerHTML = '';
-
-      const map = L.map('map').setView([-2.5489, 118.0149], 5);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      }).addTo(map);
-
+      
       stories.forEach(story => {
+        // 2. Cek apakah cerita ini ada di daftar favorit
+        const isFavorite = favoriteIds.has(story.id);
+
         const movieItem = document.createElement('div');
         movieItem.classList.add('movie-item');
-
-          movieItem.innerHTML = `
+        
+        movieItem.innerHTML = `
           <img src="${story.photoUrl}" alt="Gambar cerita oleh ${story.name}">
           <div class="movie-item__content">
             <h3>${story.name}</h3>
@@ -46,6 +56,14 @@ const HomePage = {
             <small>Dibuat pada: ${new Date(story.createdAt).toLocaleDateString('id-ID', {
               day: 'numeric', month: 'long', year: 'numeric'
             })}</small>
+            
+            <button 
+              class="favorite-button ${isFavorite ? 'favorited' : ''}" 
+              data-id="${story.id}"
+              aria-label="${isFavorite ? 'Hapus dari favorit' : 'Simpan ke favorit'}"
+            >
+              ${isFavorite ? '❤️' : '♡'}
+            </button>
           </div>
         `;
         movieListContainer.appendChild(movieItem);
@@ -54,6 +72,30 @@ const HomePage = {
           L.marker([story.lat, story.lon]).addTo(map).bindPopup(`<b>${story.name}</b>`);
         }
       });
+
+      // 4. Tambahkan SATU event listener untuk semua tombol
+      movieListContainer.addEventListener('click', async (event) => {
+        if (event.target.classList.contains('favorite-button')) {
+          event.preventDefault();
+          
+          const button = event.target;
+          const storyId = button.dataset.id;
+          
+          if (button.classList.contains('favorited')) {
+            // JIKA SUDAH FAVORIT (DELETE)
+            await FavoriteStoryIdb.deleteStory(storyId);
+            button.innerHTML = '♡';
+            button.classList.remove('favorited');
+          } else {
+            // JIKA BELUM FAVORIT (CREATE)
+            const story = stories.find(s => s.id === storyId);
+            await FavoriteStoryIdb.putStory(story);
+            button.innerHTML = '❤️';
+            button.classList.add('favorited');
+          }
+        }
+      });
+
     } catch (error) {
       alert(error.message);
       window.location.hash = '#/login';

@@ -8,16 +8,16 @@ const RegisterPage = {
         <h2>Register</h2>
         <form id="register-form">
           <div class="form-group">
-            <label for="name">Nama</label>
-            <input type="text" id="name" name="name" required>
+            <label for="nameInput">Nama</label>
+            <input type="text" id="nameInput" name="name" required>
           </div>
           <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" id="email" name="email" required>
+            <label for="emailInput">Email</label>
+            <input type="email" id="emailInput" name="email" required>
           </div>
           <div class="form-group">
-            <label for="password">Password (min. 8 karakter)</label>
-            <input type="password" id="password" name="password" minlength="8" required>
+            <label for="passInput">Password (min. 8 karakter)</label>
+            <input type="password" id="passInput" name="password" minlength="8" required>
           </div>
           <button type="submit">Register</button>
         </form>
@@ -31,9 +31,10 @@ const RegisterPage = {
     const registerForm = document.querySelector('#register-form');
     registerForm.addEventListener('submit', async (event) => {
       event.preventDefault();
-      const name = document.querySelector('#name').value;
-      const email = document.querySelector('#email').value;
-      const password = document.querySelector('#password').value;
+      // Menggunakan ID baru
+      const name = document.querySelector('#nameInput').value;
+      const email = document.querySelector('#emailInput').value;
+      const password = document.querySelector('#passInput').value;
       const errorMessage = document.querySelector('#error-message');
 
       try {

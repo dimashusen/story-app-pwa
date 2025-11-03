@@ -8,12 +8,12 @@ const LoginPage = {
         <h2>Login</h2>
         <form id="login-form">
           <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" id="email" required>
+            <label for="emailInput">Email</label>
+            <input type="email" id="emailInput" required>
           </div>
           <div class="form-group">
-            <label for="password">Password</label>
-            <input type="password" id="password" required>
+            <label for="passInput">Password</label>
+            <input type="password" id="passInput" required>
           </div>
           <button type="submit">Login</button>
         </form>
@@ -27,8 +27,9 @@ const LoginPage = {
     const loginForm = document.querySelector('#login-form');
     loginForm.addEventListener('submit', async (event) => {
       event.preventDefault();
-      const email = document.querySelector('#email').value;
-      const password = document.querySelector('#password').value;
+      // Menggunakan ID baru
+      const email = document.querySelector('#emailInput').value;
+      const password = document.querySelector('#passInput').value;
       const errorMessage = document.querySelector('#error-message');
 
       try {

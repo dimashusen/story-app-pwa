@@ -1,7 +1,6 @@
 {
-  "name": "StoryVerse - Katalog Cerita PWA",
+  "name": "StoryVerse",
   "short_name": "StoryVerse",
-  "description": "Jelajahi berbagai cerita menarik dari seluruh dunia.",
   "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#ffffff",
