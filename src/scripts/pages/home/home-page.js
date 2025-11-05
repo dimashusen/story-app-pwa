@@ -1,5 +1,6 @@
 import StoryApi from '../../data/api';
 import FavoriteStoryIdb from '../../data/idb-helper';
+import PendingStoriesDB from '../../utils/pending-stories-db';
 
 const HomePage = {
   async render() {
@@ -30,19 +31,50 @@ const HomePage = {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
     try {
-      // 1. Ambil SEMUA data (dari API dan DB)
-      const [stories, favoriteStories] = await Promise.all([
-        StoryApi.getAllStoriesWithLocation(),
-        FavoriteStoryIdb.getAllStories()
-      ]);
+      // 1. Ambil SEMUA data (dari API, DB favorit, dan pending stories)
+      let stories, favoriteStories, pendingStories;
+
+      try {
+        [stories, favoriteStories, pendingStories] = await Promise.all([
+          StoryApi.getAllStoriesWithLocation(),
+          FavoriteStoryIdb.getAllStories(),
+          PendingStoriesDB.getAllPendingStories().catch(() => []) // Jika gagal, return array kosong
+        ]);
+      } catch (error) {
+        // Jika gagal ambil data, coba satu per satu
+        console.error('Error fetching data:', error);
+        stories = await StoryApi.getAllStoriesWithLocation();
+        favoriteStories = await FavoriteStoryIdb.getAllStories().catch(() => []);
+        pendingStories = await PendingStoriesDB.getAllPendingStories().catch(() => []);
+      }
 
       // Buat Set (daftar) ID favorit untuk pengecekan cepat
       const favoriteIds = new Set(favoriteStories.map(story => story.id));
 
       movieListContainer.innerHTML = '';
-      
+
+      // 2. Tampilkan pending stories terlebih dahulu (di atas)
+      if (pendingStories && Array.isArray(pendingStories) && pendingStories.length > 0) {
+        pendingStories.forEach(pendingStory => {
+          const movieItem = document.createElement('div');
+          movieItem.classList.add('movie-item', 'pending-story');
+
+          movieItem.innerHTML = `
+            <img src="${pendingStory.photoBase64 || ''}" alt="Cerita pending">
+            <div class="movie-item__content">
+              <div class="pending-badge">⏳ Menunggu Upload</div>
+              <h3>Cerita Anda</h3>
+              <p>${pendingStory.description || 'Tidak ada deskripsi'}</p>
+              <small>Akan dipublikasikan saat online</small>
+            </div>
+          `;
+          movieListContainer.appendChild(movieItem);
+        });
+      }
+
+      // 3. Tampilkan stories dari server
       stories.forEach(story => {
-        // 2. Cek apakah cerita ini ada di daftar favorit
+        // Cek apakah cerita ini ada di daftar favorit
         const isFavorite = favoriteIds.has(story.id);
 
         const movieItem = document.createElement('div');

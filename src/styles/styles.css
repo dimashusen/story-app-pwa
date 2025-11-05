@@ -110,7 +110,7 @@ header {
     margin-bottom: 1.5rem;
 }
 
-.form-group label {
+.form-group label, .form-group .map-label {
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 500;
@@ -372,4 +372,46 @@ footer {
 .movie-item__content {
   position: relative; /* Diperlukan agar tombol bisa diposisikan */
   padding-bottom: 40px; /* Beri ruang untuk tombol */
+}
+
+/* Styling untuk pending stories */
+.pending-story {
+  border: 2px dashed var(--primary-color);
+  opacity: 0.85;
+  position: relative;
+}
+
+.pending-story::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(52, 152, 219, 0.05) 0%, rgba(52, 152, 219, 0.1) 100%);
+  pointer-events: none;
+}
+
+.pending-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+  color: white;
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 2px 8px rgba(243, 156, 18, 0.3);
+  animation: pulse-badge 2s ease-in-out infinite;
+}
+
+@keyframes pulse-badge {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
 }

@@ -37,11 +37,17 @@ const NotificationHelper = {
 
     const registration = await navigator.serviceWorker.ready;
     try {
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_KEY),
-      });
-      
+      // Cek apakah sudah ada subscription
+      let subscription = await registration.pushManager.getSubscription();
+
+      // Jika belum ada, buat subscription baru
+      if (!subscription) {
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_KEY),
+        });
+      }
+
       // Kirim subscription ke server (WAJIB)
       await this._sendSubscriptionToServer(subscription);
       console.log('Berhasil berlangganan:', subscription.toJSON());
@@ -57,18 +63,24 @@ const NotificationHelper = {
   // (DISABLE) Proses berhenti berlangganan
   async unsubscribe() {
     const subscription = await this.getSubscription();
-    if (!subscription) return;
+    if (!subscription) {
+      console.log('Tidak ada subscription aktif untuk dihapus');
+      return;
+    }
 
     try {
       // Beri tahu server dulu (WAJIB)
+      // Tapi jangan biarkan error server menghentikan unsubscribe lokal
       await this._sendUnsubscriptionToServer(subscription);
-      
+
       // Berhenti langganan di browser
-      await subscription.unsubscribe();
-      console.log('Berhasil berhenti berlangganan.');
+      const success = await subscription.unsubscribe();
+      if (success) {
+        console.log('Berhasil berhenti berlangganan.');
+      }
 
     } catch (error) {
-      console.error('Gagal berhenti berlangganan:', error);
+      console.warn('Error saat unsubscribe, tapi subscription lokal mungkin sudah dihapus:', error.message);
     }
   },
 
@@ -79,15 +91,32 @@ const NotificationHelper = {
       alert('Anda harus login untuk berlangganan notifikasi.');
       throw new Error('User not logged in');
     }
-    
-    await fetch('https://story-api.dicoding.dev/v1/notifications/subscribe', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify(subscription),
-    });
+
+    try {
+      const response = await fetch('https://story-api.dicoding.dev/v1/notifications/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(subscription),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        // Jika error 400 dan subscription sudah ada, anggap sukses
+        if (response.status === 400 && errorData.message?.includes('already')) {
+          console.log('Subscription sudah terdaftar sebelumnya');
+          return;
+        }
+        throw new Error(errorData.message || `Server error: ${response.status}`);
+      }
+    } catch (error) {
+      // Jika error network/CORS, log saja tapi jangan throw
+      // Karena subscription lokal sudah berhasil dibuat
+      console.warn('Gagal mengirim subscription ke server:', error.message);
+      // Tidak throw error agar subscription lokal tetap aktif
+    }
   },
 
   // Kirim data ke API Dicoding (untuk unsubscribe)
@@ -95,15 +124,27 @@ const NotificationHelper = {
     const token = localStorage.getItem('userToken');
     if (!token) return; // Gagal diam-diam
 
-    await fetch('https://story-api.dicoding.dev/v1/notifications/unsubscribe', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      // API butuh endpoint untuk tahu subscription mana yang harus dihapus
-      body: JSON.stringify({ endpoint: subscription.endpoint }),
-    });
+    try {
+      const response = await fetch('https://story-api.dicoding.dev/v1/notifications/unsubscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        // API butuh endpoint untuk tahu subscription mana yang harus dihapus
+        body: JSON.stringify({ endpoint: subscription.endpoint }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Server error: ${response.status}`);
+      }
+    } catch (error) {
+      // Jika error CORS atau network, log saja
+      // Unsubscribe lokal tetap akan dilakukan
+      console.warn('Gagal mengirim unsubscription ke server:', error.message);
+      // Tidak throw error agar unsubscribe lokal tetap berjalan
+    }
   },
 };
 
