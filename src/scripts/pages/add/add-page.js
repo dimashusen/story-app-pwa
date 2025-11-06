@@ -24,7 +24,9 @@ const AddPage = {
                     <div id="map-picker" role="application" aria-labelledby="map-label"></div>
                 </div>
 
+                <label for="latitude" class="sr-only">Latitude</label>
                 <input type="hidden" id="latitude" name="lat">
+                <label for="longitude" class="sr-only">Longitude</label>
                 <input type="hidden" id="longitude" name="lon">
                 <button type="submit" id="submit-button" disabled>Publikasikan Cerita</button>
             </form>
